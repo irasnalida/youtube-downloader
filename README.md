@@ -2,7 +2,7 @@
 
 This is a simple, user-friendly YouTube downloader app built using WPF for Windows. The app allows users to download YouTube videos locally by utilizing yt-dlp, a popular tool for downloading videos from YouTube and other video hosting sites. The app interacts with a native host to run yt-dlp in the background and download videos seamlessly.
 
-![Image](https://i.postimg.cc/wxrt0NJq/image.png)
+[![image.png](https://i.postimg.cc/wxrt0NJq/image.png)](https://postimg.cc/Dmqyz8BH)
 
 #### Tested only on Firefox browser on Windows 11.
 #### May not be very stable or have some bugs.
