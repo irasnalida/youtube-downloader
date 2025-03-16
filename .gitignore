@@ -1,0 +1,7 @@
+*.zip
+*/bin
+*/obj
+*/.vs
+*/.idea
+sytd-host/Properties
+*.user
