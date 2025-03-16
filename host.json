@@ -1,0 +1,7 @@
+{
+  "name": "sytd_host",
+  "description": "Native host for Youtube Downloader",
+  "path": "app\\sytd-host.exe",
+  "type": "stdio",
+  "allowed_extensions": ["sytd_host@irasnalida"]
+}
