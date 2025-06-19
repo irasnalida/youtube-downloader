@@ -2,7 +2,7 @@
   "description": "Youtube Downloader addon",
   "manifest_version": 2,
   "name": "YouTube Downloader",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "icons": {
     "48": "icons/icon.svg"
   },
@@ -12,9 +12,7 @@
     }
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["background.js"]
   },
   "browser_action": {
     "default_icon": "icons/icon.svg"
