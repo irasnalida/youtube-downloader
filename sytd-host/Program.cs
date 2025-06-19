@@ -22,13 +22,24 @@ public class Program
         }
 
         string jsonString = new string(buffer);
+        jsonString = jsonString.Replace("\\n", "\n").Replace("\\t", "\t");
+        jsonString = jsonString.Trim('"');
+        //File.WriteAllText("js.txt", jsonString);
 
         //stdin.Close();
 
-        File.AppendAllText("log.txt", $"{jsonString}\r\n");
-
+        string arguments = "";
+        if (jsonString.IndexOf(',') != -1)
+        {
+            File.WriteAllText("cookies.txt", jsonString.Split(',')[1]);
+            arguments = '"' + jsonString.Split(',')[0] + '"';
+        }
+        else
+        {
+            arguments = jsonString;
+        }
+        
         string path = Path.Combine(Directory.GetCurrentDirectory(), @"YoutubeDownloader.exe");
-        string arguments = jsonString;
 
         Process process = new Process();
 
