@@ -5,16 +5,26 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:local="clr-namespace:YoutubeDownloader"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:converters="clr-namespace:YoutubeDownloader.Converters"
                  mc:Ignorable="d"
-                 Title="MainWindow" Width="640" Height="200"
+                 Title="MainWindow" Width="640" Height="700"
                  MinHeight="100"
                  ResizeMode="NoResize"
                  WindowBackdropType="Mica"
                  ExtendsContentIntoTitleBar="True"
                  Topmost="True"
-                 MouseDown="Grid_HoldAndDrag">
+                 MouseDown="Grid_HoldAndDrag"
+                 Closing="FluentWindow_Closing">
+    <Window.Resources>
+        <converters:FileSizeConverter x:Key="FileSizeConverter"/>
+    </Window.Resources>
     <Grid>
-        <Grid VerticalAlignment="Top" Height="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="0"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
             <TextBlock Name="CustomeTitle" 
                        Margin="12 0 12 0" 
                        VerticalAlignment="Center" 
@@ -34,66 +44,139 @@
                 </ui:TitleBar.Icon>
             </ui:TitleBar>
         </Grid>
-        
-        <Grid Margin="0" VerticalAlignment="Bottom">
-    <StackPanel Margin="12 0 12 0">
 
-    </StackPanel>
-    <StackPanel Margin="12">
-        <Grid Margin="0 0 0 8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" Name="TbVideoUrl"/>
-            <Button Name="BtnFetch" Grid.Column="2" Content="Fetch" Click="BtnFetch_OnClick_Fetch"/>
-
-        </Grid>
-
-        <Grid Name="GridVidInfo" 
-              Visibility="Visible" 
-              Margin="4 0 4 8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Name="TbVidTitle" Grid.Column="0" Text="No video found! Copy Paste any youtube link to get started."/>
-        </Grid>
-
-        <Grid Margin="0 0 0 8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="180"/>
-                <ColumnDefinition Width="12"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <ComboBox HorizontalAlignment="Stretch" IsEnabled="False"  Grid.Column="0" Name="FormatListBox" SelectionChanged="FormatListBox_OnSelectionChanged"/>
-            <CheckBox Grid.Column="4" Name="ChkBoxEmbedSubs" Content="Embed Subtitles"/>
-            <CheckBox Grid.Column="2" Name="ChkBoxSponsorblock" Content="Sponsorblock"/>
-            <CheckBox Grid.Column="6" Name="ChkBoxChapters" Content="Chapters"/>
-        </Grid>
-
-        <TextBox Visibility="Collapsed" Name="FormatCodeInput"/>
-        <Grid Margin="0 0 0 0">
-            <StackPanel Name="ProgressData" Opacity="0" Height="32">
+        <Grid Grid.Row="2" Margin="12">
+            <StackPanel>
                 <Grid>
-                    <TextBlock Name="TbTextDownloaded" Text="" VerticalAlignment="Center"/>
-                    <TextBlock Name="TextSpeed" Text="" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <ui:CardExpander Name="VideoExpander" Grid.Row="0" IsEnabled="False" VerticalAlignment="Top">
+                        <ui:CardExpander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Video32" FontSize="18" Margin="0 0 12 0"/>
+                                <ui:TextBlock>Video Tracks</ui:TextBlock>
+                            </StackPanel>
+                        </ui:CardExpander.Header>
+                        <ui:CardExpander.Content>
+                            <ui:ListView Name="VideoListView" MaxHeight="210">
+                                <ui:ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <TextBlock Text="{Binding FormatId}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <TextBlock Text="{Binding Resolution}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding FrameRate}"/>
+                                                    <TextBlock Text=" FPS"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <TextBlock Text="{Binding Bitrate}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <TextBlock Text="{Binding Extension}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="6 4">
+                                                <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}"/>
+                                            </Border>
+
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ui:ListView.ItemTemplate>
+                            </ui:ListView>
+                        </ui:CardExpander.Content>
+                    </ui:CardExpander>
+                    <ProgressBar Name="VideoProgessBar" Grid.Row="0" IsIndeterminate="True" Value="0" VerticalAlignment="Bottom"/>
                 </Grid>
+                <Grid Margin="0 4 0 0">
+                    <ui:CardExpander Name="AudioExpander" Grid.Row="2" IsEnabled="False" VerticalAlignment="Top">
+                        <ui:CardExpander.Header>
+                            <StackPanel VerticalAlignment="Stretch" Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="MusicNote220" FontSize="18" Margin="0 0 12 0"/>
+                                <ui:TextBlock>Audio Tracks</ui:TextBlock>
+                            </StackPanel>
+                        </ui:CardExpander.Header>
+                        <ui:CardExpander.Content>
+                            <ui:ListView Name="AudioListView" MaxHeight="210">
+                                <ui:ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="5 3">
+                                                <TextBlock Text="{Binding FormatId}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="5 3">
+                                                <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="5 3">
+                                                <TextBlock Text="{Binding Extension}"/>
+                                            </Border>
+                                            <Border Background="#20ffffff" CornerRadius="4" Margin="0 0 5 0" Padding="5 3">
+                                                <TextBlock Text="{Binding AudioBitrate}"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ui:ListView.ItemTemplate>
+                            </ui:ListView>
+                        </ui:CardExpander.Content>
+                    </ui:CardExpander>
+                    <ProgressBar Name="AudioProgessBar" Grid.Row="2" IsIndeterminate="True" Value="0" VerticalAlignment="Bottom"/>
+                </Grid>
+                <Grid>
 
-                <ProgressBar Name="PrgbDownload" Value="0"/>
+                </Grid>
             </StackPanel>
-
-            <Button Name="BtnStartDownload" Visibility="Visible" IsEnabled="False" Content="Download" HorizontalAlignment="Stretch" Click="BtnStartDownload_OnClick"/>
         </Grid>
-    </StackPanel>
+        <Grid Grid.Row="3" VerticalAlignment="Bottom">
+            <Rectangle Fill="#292929"/>
+            <ProgressBar x:Name="ProgressDownload" Value="0" VerticalAlignment="Top" Height="6" Background="Transparent" Margin="-3 -1 -3 0"/>
+            <ui:CardExpander>
+                <ui:CardExpander.Header>
+                    <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowDown16" FontSize="18" Margin="0 0 12 0"/>
+                        <ui:TextBlock Name="TextBlock_VideoTitle">Download</ui:TextBlock>
+                    </StackPanel>
+                </ui:CardExpander.Header>
+                <ui:CardExpander.Content>
+                    <StackPanel>
+                        <Grid Margin="0 0 0 12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Output Template:" VerticalAlignment="Center"/>
+                            <ui:TextBox Grid.Column="2" Name="TextBox_OutputTemplate" Text=""/>
+                            <ui:Button Grid.Column="4" VerticalAlignment="Stretch">
+                                <ui:SymbolIcon Symbol="Info16" FontSize="18"/>
+                            </ui:Button>
+                        </Grid>
 
-</Grid>
-        
+                        <Grid Margin="0 0 0 12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Save To" VerticalAlignment="Center"/>
+                            <ui:TextBox Grid.Column="2" Name="TextBox_SaveToPath" Text=""/>
+                            <ui:Button Grid.Column="4" VerticalAlignment="Stretch">
+                                <ui:SymbolIcon Symbol="Folder32" FontSize="18"/>
+                            </ui:Button>
+                        </Grid>
+                        <Grid>
+                            <ui:Button Content="Download" HorizontalAlignment="Stretch" Click="Download_Click"/>
+                        </Grid>
+
+                    </StackPanel>
+                </ui:CardExpander.Content>
+            </ui:CardExpander>
+        </Grid>
+
     </Grid>
 </ui:FluentWindow>

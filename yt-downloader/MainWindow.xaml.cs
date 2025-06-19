@@ -1,97 +1,122 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
 
 namespace YoutubeDownloader;
-
 public partial class MainWindow
 {
     private readonly string[] _cmdArgs = Environment.GetCommandLineArgs();
-    private YoutubeDL YoutubeDL { get; }
+    private YoutubeDL YTDL { get; }
     
-    private IProgress<DownloadProgress> _progress;
-    //private IProgress<string> output;
+    IProgress<DownloadProgress> _progress;
+
+    //Dictionary<string, SubtitleData[]> subs;
     
     OptionSet _options = new OptionSet();
     
-    List<string> _formatList = new List<string>();
-    
+    List<FormatData> _formatVideoList = new List<FormatData>();
+    List<FormatData> _formatAudioList = new List<FormatData>();
+
+    string OUTOUT_TEMPLATE = "%(title)s - %(id)s [%(height)sp].%(ext)s";
+    string OUTPUT_PATH = "E:\\Downloads\\Video";
+    string URL = "";
+
     public MainWindow()
     {
-        this.YoutubeDL = new YoutubeDL() { YoutubeDLPath = "yt-dlp.exe", FFmpegPath = "ffmpeg.exe", OutputFolder = "E:\\Downloads\\Video", OutputFileTemplate = "%(title)s - %(id)s [%(height)sp].%(ext)s" };
-
+        this.YTDL = new YoutubeDL() { YoutubeDLPath = "yt-dlp.exe", FFmpegPath = "ffmpeg.exe", OutputFolder = "E:\\Downloads\\Video", OutputFileTemplate = "%(title)s - %(id)s [%(height)sp].%(ext)s" };
+        
         InitializeComponent();
         
-        _progress = new Progress<DownloadProgress>((p) => ShowProgress(p));
         if (_cmdArgs.Length == 2)
         {
             Debug.WriteLine(_cmdArgs[1]);
 
-            TbVideoUrl.Text = _cmdArgs[1];
-            //FetchAndLogData();
+            URL = _cmdArgs[1];
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), @"cookies.txt")))
+            {
+                _options.Cookies = Path.Combine(Directory.GetCurrentDirectory(), @"cookies.txt");
+            }
+            FetchAndLogData();
         }
     }
     
     private async void FetchAndLogData()
     {
-        if (TbVideoUrl.Text == string.Empty)
-        {
-            TbVidTitle.Text = "Enter a valid Youtube link!";
-            return;
-        }
 
         CustomeTitle.Text = "Fetching all formats...";
-        BtnFetch.IsEnabled = false;
+        //BtnFetch.IsEnabled = false;
 
-        FormatListBox.ItemsSource = null;
+        //FormatListBox.ItemsSource = null;
 
-        var res = await YoutubeDL.RunVideoDataFetch(TbVideoUrl.Text);
+        var res = await YTDL.RunVideoDataFetch(URL, overrideOptions:_options);
+
+        if (!res.Success)
+        {
+            foreach (string item in res.ErrorOutput)
+            {
+                Debug.WriteLine(item);
+            }
+            return;
+        }
 
         VideoData video = res.Data;
         string title = video.Title;
         string uploader = video.Uploader;
         long? views = video.ViewCount;
 
-        TbVidTitle.Text = title;
-    
-        GridVidInfo.Visibility = Visibility.Visible;
+        TextBlock_VideoTitle.Text = title;
+        TextBox_OutputTemplate.Text = OUTOUT_TEMPLATE;
+        TextBox_SaveToPath.Text = OUTPUT_PATH;
+
+        //TbVidTitle.Text = title;
+
+        //GridVidInfo.Visibility = Visibility.Visible;
 
         // all available download formats
         FormatData[] formats = video.Formats;
         Debug.WriteLine($"Title: {title}\nUploader: {uploader}\nViews: {views}");
         
-        _formatList.Clear();
-        _formatList.Add("Best");
+        //_formatList.Clear();
+        //_formatList.Add("Best");
 
         for (int i = formats.Length -1; i>=0; i--)
         {
-            //Debug.WriteLine($"Id: {formats[i].FormatId}, Res: {formats[i].Resolution}, FPS: {formats[i].FrameRate}, ApproxSize: {formats[i].ApproximateFileSize}, Size: {formats[i].FileSize}, Ext: {formats[i].Extension}, Format: {formats[i].Format}, {formats[i].Bitrate}");
+            Debug.WriteLine($"Id: {formats[i].FormatId}, Res: {formats[i].Resolution}, FPS: {formats[i].FrameRate}, ApproxSize: {formats[i].ApproximateFileSize}, Size: {formats[i].FileSize}, Ext: {formats[i].Extension}, Format: {formats[i].Format}, {formats[i].Bitrate} {formats[i].AudioBitrate}");
 
-            if (formats[i].ApproximateFileSize != null)
+            if (formats[i].FrameRate != null)
             {
-                string f = ($"{formats[i].Resolution}, {FormatFileSize(formats[i].ApproximateFileSize ?? 0)} [{formats[i].FormatId}]");
-                _formatList.Add(f);
+                //string f = ($"{formats[i].Resolution}, {FormatFileSize(formats[i].ApproximateFileSize ?? 0)} [{formats[i].FormatId}]");
+                _formatVideoList.Add(formats[i]);
+            }
+            else if (formats[i].Resolution == "audio only"){
+                _formatAudioList.Add(formats[i]);
             }
         }
-        FormatListBox.ItemsSource = _formatList;
-        Debug.WriteLine(FormatListBox.SelectedIndex);
+        //FormatListBox.ItemsSource = _formatList;
+        //Debug.WriteLine(FormatListBox.SelectedIndex);
+        //Debug.WriteLine(FormatListBox);
 
-        BtnFetch.IsEnabled = true;
-        BtnStartDownload.IsEnabled = true;
-        FormatListBox.IsEnabled = true;
+        //BtnFetch.IsEnabled = true;
+        //BtnStartDownload.IsEnabled = true;
+        //FormatListBox.IsEnabled = true;
         CustomeTitle.Text = "Fetching complete!";
+
+        VideoListView.ItemsSource = _formatVideoList;
+        VideoExpander.IsEnabled = true;
+        VideoProgessBar.Visibility = Visibility.Collapsed;
+        AudioListView.ItemsSource = _formatAudioList;
+        AudioExpander.IsEnabled = true;
+        AudioProgessBar.Visibility = Visibility.Collapsed;
     }
     
     private void ShowProgress(DownloadProgress p)
     {
         CustomeTitle.Text = p.State.ToString();
-        PrgbDownload.Value = p.Progress * 100;
-        TbTextDownloaded.Text = $"Downloaded {Math.Round(p.Progress*100,2)}% of {p.TotalDownloadSize}";
-        TextSpeed.Text = p.DownloadSpeed;
+        ProgressDownload.Value = Math.Round(p.Progress * 100);
     }
     
     public static string FormatFileSize(long bytes)
@@ -108,66 +133,54 @@ public partial class MainWindow
         this.DragMove();
     }
 
-    private void BtnFetch_OnClick_Fetch(object sender, RoutedEventArgs e)
+    private async void Download_Click(object sender, RoutedEventArgs e)
     {
-        FetchAndLogData();
-    }
+        if( VideoListView.SelectedIndex < 0 ||
+            AudioListView.SelectedIndex < 0 ||
+            TextBox_OutputTemplate.Text.Length == 0 ||
+            !Directory.Exists(TextBox_SaveToPath.Text) )
+        {
+            //show tooltip
+            return;
+        }
 
-    private async void BtnStartDownload_OnClick(object sender, RoutedEventArgs e)
-    {
-        BtnStartDownload.Visibility = Visibility.Collapsed;
-        ProgressData.Opacity = 1;
-        
-        if (ChkBoxSponsorblock.IsChecked == true) _options.AddCustomOption<string>("--sponsorblock-mark", "all");
-        if (ChkBoxEmbedSubs.IsChecked == true) _options.AddCustomOption<string>("--embed-subs", "");
-        if (ChkBoxChapters.IsChecked == true) _options.AddCustomOption<string>("--embed-chapters", "");
-        
+
+        FormatData v = _formatVideoList[VideoListView.SelectedIndex];
+        FormatData a = _formatAudioList[AudioListView.SelectedIndex];
+
+        Debug.WriteLine(v.FormatId);
+        Debug.WriteLine(a.FormatId);
+
+        _options.Format = $"{v.FormatId}+{a.FormatId}";
+        //_options.Output = TextBox_OutputTemplate.Text;
+        //this.YTDL.OutputFolder = TextBox_SaveToPath.Text;
+        //this.YTDL.OutputFileTemplate = TextBox_OutputTemplate.Text;
+
+        _progress = new Progress<DownloadProgress>(p => ShowProgress(p));
+
         RunResult<string> result;
-        result = await YoutubeDL.RunVideoDownload(TbVideoUrl.Text, progress: _progress, overrideOptions: _options);
+        result = await YTDL.RunVideoDownload(_cmdArgs[1], progress: _progress, overrideOptions: _options);
 
         if (result.Success)
         {
-            Title = "Download Completed";
+            CustomeTitle.Text = "Download Completed";
         }
         else
         {
-            Title = "Error";
-            foreach(string err in result.ErrorOutput)
+            CustomeTitle.Text = "Error";
+            foreach (string err in result.ErrorOutput)
             {
                 Debug.WriteLine(err);
             }
         }
-        ProgressData.Opacity = 0;
-        BtnStartDownload.Visibility= Visibility.Visible;
     }
 
-    private void FormatListBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void FluentWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (FormatListBox.SelectedIndex < 0) return;
-        string selectedItem = FormatListBox.SelectedItem.ToString();
-        if (selectedItem == "Best") { _options.Format = "bestvideo*+bestaudio/best"; Debug.WriteLine("Set Best"); }
-        else
+        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), @"cookies.txt")))
         {
-            int startIndex = selectedItem.IndexOf('[');
-            int endIndex = selectedItem.IndexOf(']', startIndex);
-            string fs = "";
-
-            if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex)
-            {
-                _options.Format = "bestvideo*+bestaudio/best"; Debug.WriteLine("Set Best");
-            }
-            else
-            {
-                fs = selectedItem.Substring(startIndex + 1, endIndex - startIndex - 1);
-                if (selectedItem.Contains("audio only"))
-                {
-                    _options.Format = fs; Debug.WriteLine($"Set {fs}");
-                }
-                else
-                {
-                    _options.Format = fs+"+bestaudio"; Debug.WriteLine($"Set {fs}+bestaudio");
-                }
-            }
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), @"cookies.txt"), "");
+            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), @"cookies.txt"));
         }
     }
 }
