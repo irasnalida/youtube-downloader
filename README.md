@@ -1,14 +1,15 @@
 # Youtube Downloader
 
-This is a simple, user-friendly YouTube downloader app built using WPF for Windows. The app allows users to download YouTube videos locally by utilizing yt-dlp, a popular tool for downloading videos from YouTube and other video hosting sites. The app interacts with a native host to run yt-dlp in the background and download videos seamlessly.
+This is a YouTube downloader app built using WPF for Windows. The app allows users to download YouTube videos locally by utilizing yt-dlp, a popular tool for downloading videos from YouTube and other video hosting sites. The app interacts with a native host to run yt-dlp and download videos seamlessly.
 
-[![image.png](https://i.postimg.cc/wxrt0NJq/image.png)](https://postimg.cc/Dmqyz8BH)
+[![image.png](/assets/screenshot.png)]()
 
 #### Tested only on Firefox browser on Windows 11.
-#### May not be very stable or have some bugs.
-#### This app can work standalone or with the addon. Just copy paste a link or right click and select `Download Video` option from the context menu.
+
+#### Not be very stable or have some bugs.
 
 ## Install Guide
+
 - Build both `sytd-host` and `yt-downloader` in Visual Studio.
 - Create a folder `Youtube Downloader` and inside that create `app` folder.
 - Copy the build files from sytd-host and yt-downloader inside the `app` folder.
@@ -16,8 +17,8 @@ This is a simple, user-friendly YouTube downloader app built using WPF for Windo
 - Run the `register-host.bat` file to create the registry entry for the host app.
 - Download and install the addon from release.
 
-
 ## Depends on the following
+
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [WPFUI](https://wpfui.lepo.co/)
 - [YoutubeDLSharp](https://github.com/Bluegrams/YoutubeDLSharp).
