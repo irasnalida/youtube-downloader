@@ -23,6 +23,8 @@
     "*://www.youtube.com/*",
     "contextMenus",
     "activeTab",
-    "nativeMessaging"
+    "nativeMessaging",
+    "cookies",
+    "tabs"
   ]
 }
